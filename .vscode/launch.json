@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Rust Debug",
+            "type": "lldb",
+            "request": "launch",
+            // 핵심: 빌드된 바이너리를 자동으로 찾아주는 매크로입니다.
+            "program": "${workspaceFolder}/target/debug/hello_rust",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            // 디버깅 시작 전 cargo build를 먼저 실행하도록 합니다.
+            "cargo": {
+                "args": ["build"]
+            }
+        }
+    ]
+}

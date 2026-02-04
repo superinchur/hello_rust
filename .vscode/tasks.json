@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "rust: cargo run example",
+            "command": "/config/.cargo/bin/cargo",
+            "args": [
+                "run",
+                "--example",
+                "${fileBasenameNoExtension}" // 현재 열려있는 파일 이름으로 자동 실행
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "/config/.cargo/bin:${env:PATH}"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

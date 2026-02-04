@@ -1,0 +1,18 @@
+{
+    "terminal.integrated.automationProfile.linux": {
+        "path": "/usr/bin/bash",
+        "env": {
+            "PATH": "/config/.cargo/bin:${env:PATH}"
+        }
+    },
+    // 1. Run 버튼을 누를 때 사용할 환경 변수 주입
+    "rust-analyzer.runnables.extraEnv": {
+        "PATH": "/config/.cargo/bin:${env:PATH}"
+    },
+
+    // 2. Debug 버튼(CodeLLDB)을 누를 때 사용할 환경 변수 주입
+    "lldb.adapterEnv": {
+        "PATH": "/config/.cargo/bin:${env:PATH}"
+    }
+    
+}
