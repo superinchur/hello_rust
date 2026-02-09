@@ -18,17 +18,49 @@
 //# TestCase는 현재 개발환경에 맞춰서 examples/inputs/....txt로 설정
 
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
-use std::cmp::Ordering;
 
 // 2. 핵심 알고리즘 로직
+// N이 20개면 2^20 = 1024 * 1024 = 대략 100만?
 fn solve<R: Read, W: Write>(input: R, output: W) -> io::Result<()> {
     let mut reader = BufReader::new(input);
     let mut writer = BufWriter::new(output);
 
     // N 읽기
+    // 1. N과 S 입력받기
     let mut first_line = String::new();
     if reader.read_line(&mut first_line)? == 0 { return Ok(()); }
-    let n: usize = first_line.trim().parse().unwrap_or(0);
+    let params: Vec<i32> = first_line.split_whitespace()
+        .map(|s| s.parse().unwrap()).collect();
+    let n = params[0] as usize;
+    let s = params[1];
+
+    // 2. 수열 입력받기
+    let mut second_line = String::new();
+    reader.read_line(&mut second_line)?;
+    let numbers: Vec<i32> = second_line.split_whitespace()
+        .map(|s| s.parse().unwrap()).collect();
+
+    let mut answer_count = 0;
+
+    // 3. 모든 경우의 수를 다 구함
+    // 2의 n승
+    for i in 1..(1 << n) {
+        let mut current_sum = 0;
+        
+        for j in 0..n {
+            // i의 j번째 비트가 1인지 확인 (j번째 원소를 포함하는지 확인)
+            if (i & (1 << j)) != 0 {
+                current_sum += numbers[j];
+            }
+        }
+
+        if current_sum == s {
+            answer_count += 1;
+        }
+    }
+
+    writeln!(writer, "{}", answer_count)?;
+    writer.flush()?;
 
     Ok(())
 }

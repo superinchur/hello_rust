@@ -20,22 +20,13 @@
 //! #출력
 //!입력으로 주어진 N에 대해서, 해당하는 칸토어 집합의 근사를 출력한다.
 
-
-use std::fs::File;
-use std::io::{self, BufRead, BufReader};
-use std::path::Path;
-
-fn main() -> io::Result<()> {
-    // 1. 입력이 여러 줄로 들어오므로 stdin의 lock을 사용하여 효율적으로 읽습니다.
-    let path = "examples/inputs/boj4779_input.txt";
-    // 2. 파일 열기 (C#의 FileStream과 유사)
-    let file = File::open(path).map_err(|e| {
-        eprintln!("파일 열기 실패: {} (경로: {:?})", e, std::env::current_dir().unwrap().join(path));
-        e
-    })?;
+use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
+// 2. 핵심 알고리즘 로직
+fn solve<R: Read, W: Write>(input: R, output: W) -> io::Result<()> {
+    let mut reader = BufReader::new(input);
+    let mut writer = BufWriter::new(output);
 
     // 3. 성능을 위해 BufReader로 감싸기 (C#의 StreamReader 역할)
-    let reader = BufReader::new(file);
 
     for line in reader.lines() {
         let line = line?; // 읽기 에러 체크
@@ -45,12 +36,22 @@ fn main() -> io::Result<()> {
             let mut result = vec!['-'; length];
             
             cantor_recursive(0, length, &mut result);
+            writeln!(writer, "{}", result.into_iter().collect::<String>())?;
             
-            println!("{}", result.into_iter().collect::<String>());
         }
     }
 
+    writer.flush()?;
     Ok(())
+}
+
+// 2. 실제 제출용 메인 함수 (표준 입출력 사용)
+fn main() -> io::Result<()> {
+    let stdin = io::stdin();
+    let stdout = io::stdout();
+    
+    // 표준 입출력을 solve 함수에 전달
+    solve(stdin.lock(), stdout.lock())
 }
 
 
@@ -104,10 +105,53 @@ fn cantor_recursive(start: usize, len: usize, arr: &mut Vec<char>) {
     cantor_recursive(start + 2 * third, third, arr);
 }
 
+
+// 4. 테스트 케이스 (파일에서 읽어오기)
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
+    use std::fs::{self, File};
 
+    #[test]
+    fn test_from_file() -> io::Result<()> {
+
+        // 1. 현재 파일의 전체 경로 가져오기 (예: "src/main.rs")
+        let file_path: &str = file!(); 
+        
+        // 2. 경로에서 파일명만 분리하고 확장자(.rs) 제거하기
+        // rust-analyzer: ignore
+        let base_name = Path::new(file_path)
+            .file_stem()            // 확장자 제거 (예: "main")
+            .and_then(|s| s.to_str())
+            .unwrap_or("default");
+
+        let dir = "examples/inputs";
+
+        // 3. 규칙에 따라 경로 생성
+        let input_path = format!("{}/{}_input.txt", dir, base_name);
+        let expected_path = format!("{}/{}_expected.txt", dir, base_name);
+        let result_path = format!("{}/{}_result.txt", dir, base_name);
+
+        println!("Testing with base_name: {}", base_name);
+
+        // 4. 파일 열기
+        let input_file = File::open(input_path).expect("테스트 입력 파일이 없습니다.");
+        let output_file = File::create(&result_path)?;
+
+        // 5. solve 함수 실행 (실제 알고리즘 수행)
+        solve(input_file, output_file)?;
+
+        // 6. 결과값(Result)과 정답지(Expected) 읽어오기
+        let result = fs::read_to_string(result_path)?;
+        let expected = fs::read_to_string(expected_path).expect("정답지 파일이 없습니다.");
+
+        // 7. 검증 (두 내용이 일치하는지 확인)
+        assert_eq!(result.trim(), expected.trim(), "결과가 정답지와 일치하지 않습니다!");
+        Ok(())
+    }
+
+    
     /// 칸토어 집합 결과를 문자열로 반환하는 헬퍼 함수
     fn get_cantor_string(n: u32) -> String {
         let length = 3usize.pow(n);
@@ -142,3 +186,5 @@ mod tests {
         }
     }
 }
+
+   

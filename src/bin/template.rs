@@ -3,7 +3,6 @@
 //# TestCase는 현재 개발환경에 맞춰서 examples/inputs/....txt로 설정
 
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
-use std::cmp::Ordering;
 
 // 2. 핵심 알고리즘 로직
 fn solve<R: Read, W: Write>(input: R, output: W) -> io::Result<()> {

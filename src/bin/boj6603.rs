@@ -11,13 +11,40 @@
 //!각 테스트 케이스 사이에는 빈 줄을 하나 출력한다.
 //! 
 
-use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
+/// 수정된 백트래킹 함수
+fn backtrack<W: Write>(
+    s: &[i32], 
+    start: usize, 
+    depth: usize, 
+    out: &mut Vec<i32>, 
+    writer: &mut W // Writer를 가변 참조자로 받음
+) -> io::Result<()> {
+    // 6개를 모두 골랐다면 출력
+    if depth == 6 {
+        for (i, &num) in out.iter().enumerate() {
+            write!(writer, "{}", num)?;
+            if i < 5 { write!(writer, " ")?; }
+        }
+        writeln!(writer)?;
+        return Ok(());
+    }
 
-fn main() -> io::Result<()> {
-    let path = "examples/inputs/boj6603_input.txt";
-    let file = File::open(path).expect("파일을 찾을 수 없습니다.");
-    let reader = BufReader::new(file);
+    for i in start..s.len() {
+        // 가지치기: 남은 숫자가 부족하면 중단
+        if s.len() - i < 6 - depth { break; }
+
+        out[depth] = s[i];
+        // 재귀 호출 시 writer를 다시 넘겨줌
+        backtrack(s, i + 1, depth + 1, out, writer)?;
+    }
+    
+    Ok(())
+}
+
+fn solve<R: Read, W: Write>(input: R, output: W) -> io::Result<()> {
+    let mut reader = BufReader::new(input);
+    let mut writer = BufWriter::new(output); // 여기서 만든 writer를 사용
 
     let mut first_case = true;
 
@@ -28,48 +55,77 @@ fn main() -> io::Result<()> {
             .map(|s| s.parse().unwrap())
             .collect();
 
-        // 첫 번째 숫자가 k (0이면 종료)
         let k = nums[0];
         if k == 0 { break; }
 
-        // 각 테스트 케이스 사이에 빈 줄 출력 (첫 케이스 제외)
         if !first_case {
-            println!();
+            writeln!(writer)?; // println! 대신 writer 사용
         }
         first_case = false;
 
-        let s = &nums[1..]; // 실제 집합 S
-        let mut combination = vec![0; 6]; // 선택된 6개를 담을 공간
+        let s = &nums[1..];
+        let mut combination = vec![0; 6];
         
-        backtrack(s, 0, 0, &mut combination);
+        // backtrack 호출 시 writer 전달
+        backtrack(s, 0, 0, &mut combination, &mut writer)?;
     }
 
+    // BufWriter는 마지막에 flush를 해주거나 스코프가 끝나야 데이터가 완전히 기록됩니다.
+    writer.flush()?; 
     Ok(())
 }
 
-/// 조합을 찾기 위한 백트래킹 함수
-///
-/// # Arguments
-/// * `s` - 전체 숫자 집합
-/// * `start` - 탐색을 시작할 인덱스
-/// * `depth` - 현재까지 선택한 숫자의 개수
-/// * `out` - 선택된 숫자를 저장할 배열
-fn backtrack(s: &[i32], start: usize, depth: usize, out: &mut Vec<i32>) {
-    // 6개를 모두 골랐다면 출력
-    if depth == 6 {
-        let res: String = out.iter()
-            .map(|n| n.to_string())
-            .collect::<Vec<String>>()
-            .join(" ");
-        println!("{}", res);
-        return;
-    }
+// 2. 실제 제출용 메인 함수 (표준 입출력 사용)
+fn main() -> io::Result<()> {
+    let stdin = io::stdin();
+    let stdout = io::stdout();
+    
+    // 표준 입출력을 solve 함수에 전달
+    solve(stdin.lock(), stdout.lock())
+}
 
-    // 남은 숫자가 골라야 할 숫자보다 적으면 더 이상 진행할 필요 없음 (가지치기)
-    for i in start..s.len() {
-        if s.len() - i < 6 - depth { break; }
+// 4. 테스트 케이스 (파일에서 읽어오기)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+    use std::fs::{self, File};
 
-        out[depth] = s[i];
-        backtrack(s, i + 1, depth + 1, out);
+    #[test]
+    fn test_from_file() -> io::Result<()> {
+
+        // 1. 현재 파일의 전체 경로 가져오기 (예: "src/main.rs")
+        let file_path: &str = file!(); 
+        
+        // 2. 경로에서 파일명만 분리하고 확장자(.rs) 제거하기
+        // rust-analyzer: ignore
+        let base_name = Path::new(file_path)
+            .file_stem()            // 확장자 제거 (예: "main")
+            .and_then(|s| s.to_str())
+            .unwrap_or("default");
+
+        let dir = "examples/inputs";
+
+        // 3. 규칙에 따라 경로 생성
+        let input_path = format!("{}/{}_input.txt", dir, base_name);
+        let expected_path = format!("{}/{}_expected.txt", dir, base_name);
+        let result_path = format!("{}/{}_result.txt", dir, base_name);
+
+        println!("Testing with base_name: {}", base_name);
+
+        // 4. 파일 열기
+        let input_file = File::open(input_path).expect("테스트 입력 파일이 없습니다.");
+        let output_file = File::create(&result_path)?;
+
+        // 5. solve 함수 실행 (실제 알고리즘 수행)
+        solve(input_file, output_file)?;
+
+        // 6. 결과값(Result)과 정답지(Expected) 읽어오기
+        let result = fs::read_to_string(result_path)?;
+        let expected = fs::read_to_string(expected_path).expect("정답지 파일이 없습니다.");
+
+        // 7. 검증 (두 내용이 일치하는지 확인)
+        assert_eq!(result.trim(), expected.trim(), "결과가 정답지와 일치하지 않습니다!");
+        Ok(())
     }
 }
