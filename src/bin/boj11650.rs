@@ -8,7 +8,6 @@
 //!첫째 줄부터 N개의 줄에 점을 정렬한 결과를 출력한다.
 
 
-use std::fs::File;
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 
 // 1. 점을 표현하는 구조체 정의 (또는 단순 튜플 사용 가능)
@@ -65,6 +64,8 @@ fn solve<R: Read, W: Write>(input: R, output: W) -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    
+    use std::fs::File;
     use std::fs;
     use std::path::Path;
     #[test]

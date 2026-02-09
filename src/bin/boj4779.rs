@@ -23,7 +23,7 @@
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 // 2. 핵심 알고리즘 로직
 fn solve<R: Read, W: Write>(input: R, output: W) -> io::Result<()> {
-    let mut reader = BufReader::new(input);
+    let reader = BufReader::new(input);
     let mut writer = BufWriter::new(output);
 
     // 3. 성능을 위해 BufReader로 감싸기 (C#의 StreamReader 역할)

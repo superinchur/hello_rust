@@ -36,7 +36,6 @@
 /// 
 
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
-use std::cmp::Ordering;
 
 struct Query{
     throw_in: String,

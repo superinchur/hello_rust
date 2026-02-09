@@ -43,7 +43,7 @@ fn backtrack<W: Write>(
 }
 
 fn solve<R: Read, W: Write>(input: R, output: W) -> io::Result<()> {
-    let mut reader = BufReader::new(input);
+    let reader = BufReader::new(input);
     let mut writer = BufWriter::new(output); // 여기서 만든 writer를 사용
 
     let mut first_case = true;
